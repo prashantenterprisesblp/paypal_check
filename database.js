@@ -290,6 +290,10 @@ else if(mobile && user_id)
 			"mobile": mobile
 		}
 	};
+
+	var select_params = {
+		TableName:table
+	};
 	
 	console.log("Params:"+JSON.stringify(params));
 	
@@ -301,8 +305,15 @@ else if(mobile && user_id)
 		}
 	});
 	
+	docClient.scan(select_params, function(err, data) {
+		if (err) {
+			console.error("Unable to query. Error JSON:", JSON.stringify(err, null, 2));
+		} else {
+		response.send(['User id Mappings', data.Items]);
+		}		
+	});	
 
-connection.query('SELECT * from t_users', function(err, results) {
+/* connection.query('SELECT * from t_users', function(err, results) {
 
 var id = results.length + 1;	
 
@@ -319,7 +330,7 @@ connection.query('SELECT * from t_users', function(err, rows, fields) {
 		throw err;
 	}
 	response.send(['User id Mappings', rows]);
-});		
+}); */		
 
 }
 
@@ -500,13 +511,30 @@ response.send(['Offers list', data.Items]);
 }
 	
 else{
-	connection.query('SELECT * from t_users GROUP BY user_id', function(err, rows, fields) {
+	
+	var table = "t_users";	
+	
+	var select_params = {
+		TableName:table
+	};
+
+
+	docClient.scan(select_params, function(err, data) {
+		if (err) {
+			console.error("Unable to query. Error JSON:", JSON.stringify(err, null, 2));
+		} else {
+		response.send(['User id Mappings', data.Items]);
+		}		
+	});	
+	
+	/* connection.query('SELECT * from t_users GROUP BY user_id', function(err, rows, fields) {
         if (err) {
             console.log('error: ', err);
             throw err;
         }
         response.send(['User id Mappings', rows]);
-    });
+    }); */
+	
 }
 	
 });
