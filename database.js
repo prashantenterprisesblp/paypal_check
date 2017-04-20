@@ -2,6 +2,7 @@ var express = require('express');
 var mysql = require('mysql');
 var app = express();
 var AWS = require('aws-sdk');
+var request12 = require("request");
 
 AWS.config.update({
   region: "us-west-2",
@@ -75,6 +76,8 @@ var name = request.params.name;
 
 var offers = request.params.offer;
 
+var notification = request.params.notify;
+	
 var category = request.params.category;
 
 var delete_offer = request.params.delete_offer;
@@ -188,6 +191,134 @@ catch(e)
 	
 }
 
+	
+else if(notification)
+{
+var table = "t_users";	
+
+var arr12 = [];
+
+var select_params = {
+	TableName:table
+};
+
+docClient.scan(select_params, function(err, data) {
+if (err) {
+	console.error("Unable to query. Error JSON:", JSON.stringify(err, null, 2));
+} else {	
+data.Items.forEach(function(item) {  
+	 arr12.push(item.fb_user_id);
+});
+
+
+var table = "offers";	
+
+var arr1 = [];
+
+var select_params = {
+	TableName:table
+};
+
+docClient.scan(select_params, function(err, data) {
+if (err) {
+	console.error("Unable to query. Error JSON:", JSON.stringify(err, null, 2));
+} else {	
+data.Items.forEach(function(item) {  
+	 arr1.push({
+		"type": "web_url",
+		"title": item.offer_name,
+		"url": item.description		 
+	  })
+});	  
+
+/* connection.query('select * from category', function(err, rows12) { */
+
+var table = "category";	
+
+var select_params1 = {
+	TableName:table
+};
+
+docClient.scan(select_params1, function(err, data) {
+if (err) {
+	console.error("Unable to query. Error JSON:", JSON.stringify(err, null, 2));
+} else {	
+
+ var messageData = {
+            attachment: {
+                type: "template",
+                payload: {
+                    template_type: "generic",
+                    elements: [{
+                        title: data.Items[0].title,
+                        subtitle: data.Items[0].sub_title,
+                        image_url: data.Items[0].img_url,
+                        buttons: arr1
+                    }]
+                }
+            }
+    };
+
+console.log("MessageData:"+JSON.stringify(messageData));
+
+var token = process.env.FB_PAGE_TOKEN;
+
+function onlyUnique(value, index, self) { 
+    return self.indexOf(value) === index;
+}
+
+var uni_arr12 = arr12.filter( onlyUnique );
+
+console.log("Users:"+JSON.stringify(uni_arr12));
+
+uni_arr12.forEach(function(arr13) {
+
+var user_id = arr13;
+
+var requestData12 = {
+      url: 'https://graph.facebook.com/v2.6/me/messages',
+      qs: {access_token:token},
+      method: 'POST',
+      json: {
+        dashbotTemplateId: 'right',		  
+        recipient: {
+			id:user_id
+			},
+        message: messageData
+      }
+};
+
+console.log('RequestData:', requestData12);
+
+request12(requestData12, function(error, res, body) {  
+if (error) {
+  console.log('Error sending message: ', error);
+} else if (res.body.error) {
+  console.log('Error: ', res.body.error);
+}
+
+});
+
+});
+
+}
+
+});
+	
+}
+
+});
+
+
+}
+
+});
+
+response.send('Notification sent successfully');
+
+}
+
+	
 else if(categorytitle && categorysubtitle && categoryimgurl)
 {
 var table = "category";	
