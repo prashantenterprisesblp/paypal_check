@@ -5,10 +5,10 @@ var AWS = require('aws-sdk');
 var request12 = require("request");
 
 AWS.config.update({
-  region: "us-west-2",
+  region: process.env.AWS_REGION,
   accessKeyId: process.env.AWS_ACCESS_KEY_ID,
   secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-  endpoint: "https://dynamodb.us-west-2.amazonaws.com"
+  endpoint: process.env.AWS_ENDPOINT
 });
 
 var dynamodb = new AWS.DynamoDB();
